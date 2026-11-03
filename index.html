@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Vocabulary Game - สนุกกับคำศัพท์ผลไม้</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti for celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF9F0',
+                        'cream-card': '#FFFFFF',
+                        pink: {
+                            light: '#FFE5EC',
+                            DEFAULT: '#FFC2D1',
+                            dark: '#FF85A1',
+                        },
+                        green: {
+                            light: '#D8F3DC',
+                            medium: '#B7E4C7',
+                            DEFAULT: '#52B788',
+                            dark: '#2D6A4F',
+                        }
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        kanit: ['Kanit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Kanit', 'Fredoka', sans-serif;
+            background-color: #FFF9F0;
+            user-select: none;
+        }
+        .font-english {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .bounce-gentle {
+            animation: bounceGentle 2s infinite;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .btn-press {
+            transition: all 0.1s ease;
+        }
+        .btn-press:active {
+            transform: translateY(3px) scale(0.96);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+        }
+        .custom-shadow {
+            box-shadow: 0 10px 25px -5px rgba(255, 194, 209, 0.4), 0 8px 10px -6px rgba(82, 183, 136, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-6 text-gray-700">
+
+    <!-- Header Section: Title, Timer & Score -->
+    <header class="w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-sm border-2 border-pink-light flex flex-wrap items-center justify-between gap-3 mb-4">
+        <!-- Brand/Title -->
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-2xl bg-pink-light flex items-center justify-center text-pink-dark text-xl font-bold shadow-inner">
+                🍓
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800 leading-tight font-english">Fruit Vocab Game</h1>
+                <p class="text-xs text-gray-500 font-kanit">ทายคำศัพท์ภาษาอังกฤษ ป.3</p>
+            </div>
+        </div>
+
+        <!-- Timer & Score Display -->
+        <div class="flex items-center gap-3 ml-auto">
+            <!-- Timer Badge -->
+            <div class="flex items-center gap-2 bg-pink-light/60 px-3 py-1.5 rounded-2xl border border-pink text-pink-dark font-english font-bold text-lg sm:text-xl">
+                <i class="fa-regular fa-clock text-pink-dark"></i>
+                <span id="timerDisplay">20:00</span>
+            </div>
+
+            <!-- Score Badge -->
+            <div class="flex items-center gap-2 bg-green-light/80 px-3.5 py-1.5 rounded-2xl border border-green-medium text-green-dark font-english font-bold text-lg sm:text-xl shadow-sm">
+                <i class="fa-solid fa-star text-amber-400"></i>
+                <span id="scoreDisplay">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center">
+        <!-- Start Screen -->
+        <div id="startScreen" class="w-full bg-white rounded-3xl p-6 sm:p-8 custom-shadow text-center border-4 border-pink-light my-auto pop-in">
+            <div class="w-28 h-28 mx-auto mb-4 bg-pink-light rounded-full flex items-center justify-center text-6xl bounce-gentle shadow-inner">
+                🍌
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">เกมทายคำศัพท์ผลไม้สุดสนุก!</h2>
+            <p class="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
+                น้องๆ ชั้น ป.3 มาช่วยกันเติมตัวอักษรภาษาอังกฤษที่หายไปให้ถูกต้องนะคะ<br>
+                สะสมคะแนนให้ได้มากที่สุดภายในเวลา <span class="font-bold text-pink-dark">20 นาที</span> กันเลย! 🎯
+            </p>
+            <button onclick="startGame()" class="btn-press bg-green hover:bg-green-dark text-white text-xl font-bold py-3.5 px-8 rounded-2xl shadow-lg border-b-4 border-green-dark transition-all transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-play mr-2"></i> เริ่มเล่นเกมเลย!
+            </button>
+        </div>
+
+        <!-- Gameplay Screen -->
+        <div id="gameScreen" class="w-full bg-white rounded-3xl p-5 sm:p-8 custom-shadow border-4 border-pink-light hidden flex-col items-center">
+            
+            <!-- Question Header / Progress -->
+            <div class="w-full flex justify-between items-center mb-4 text-sm font-semibold text-gray-500">
+                <span id="questionProgress" class="bg-cream px-3 py-1 rounded-full text-green-dark border border-green-light font-english">
+                    Word 1 / 15
+                </span>
+                <span class="text-xs sm:text-sm text-gray-400">คลิกเลือกตัวอักษรเพื่อเติมคำในช่องว่าง</span>
+            </div>
+
+            <!-- Image Container (Hidden or Blurred until solved, or revealed on completion) -->
+            <div class="relative w-40 h-40 sm:w-48 sm:h-48 mb-6 bg-cream rounded-3xl p-4 flex items-center justify-center border-2 border-dashed border-pink/60 shadow-inner overflow-hidden">
+                <!-- SVG Fruit Graphic -->
+                <div id="fruitImage" class="w-full h-full transition-all duration-500 transform scale-90 filter blur-sm opacity-40">
+                    <!-- Dynamic SVG injected here -->
+                </div>
+                <!-- Lock / Hint Overlay -->
+                <div id="imageOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-white/30 backdrop-blur-[2px] transition-opacity duration-300">
+                    <span class="text-3xl mb-1">❓</span>
+                    <span class="text-xs text-gray-600 font-medium bg-white/80 px-2 py-0.5 rounded-full">ทายคำศัพท์เพื่อเปิดรูป!</span>
+                </div>
+            </div>
+
+            <!-- Thai Hint -->
+            <div id="thaiHint" class="text-lg sm:text-xl font-bold text-green-dark bg-green-light/40 px-4 py-1.5 rounded-full mb-6 text-center">
+                คำแปล: มะม่วง
+            </div>
+
+            <!-- Word Display (Letters & Blanks) -->
+            <div id="wordContainer" class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 font-english">
+                <!-- Letter Slots will be inserted dynamically -->
+            </div>
+
+            <!-- Pronunciation Sound Button (Shown after solved or usable for hint) -->
+            <button id="speakBtn" onclick="speakCurrentWord()" class="hidden mb-6 bg-pink-light hover:bg-pink text-pink-dark font-semibold px-4 py-2 rounded-xl border border-pink text-sm sm:text-base transition flex items-center gap-2">
+                <i class="fa-solid fa-volume-high text-lg"></i> ฟังเสียงอ่านภาษาอังกฤษ
+            </button>
+
+            <!-- On-Screen Keyboard / Letter Options -->
+            <div id="keyboard" class="w-full max-w-md grid grid-cols-7 sm:grid-cols-9 gap-1.5 sm:gap-2 mb-2 font-english">
+                <!-- Keyboard buttons will be generated dynamically -->
+            </div>
+
+            <!-- Action Controls (Skip / Hint) -->
+            <div class="w-full flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                <button onclick="getHint()" class="text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-1.5 border border-amber-200">
+                    <i class="fa-solid fa-lightbulb text-amber-500"></i> ใบ้คำ
+                </button>
+                <button id="nextBtn" onclick="nextQuestion()" class="hidden btn-press bg-green hover:bg-green-dark text-white font-bold px-6 py-2 rounded-xl shadow border-b-2 border-green-dark text-sm sm:text-base">
+                    ข้อถัดไป <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- End Game Modal / Summary -->
+        <div id="summaryModal" class="w-full bg-white rounded-3xl p-6 sm:p-8 custom-shadow text-center border-4 border-green-medium hidden pop-in my-auto">
+            <div class="text-6xl mb-3">🎉</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">หมดเวลาแล้วจ้า! / เก่งมากคะ!</h2>
+            <p class="text-gray-500 text-sm mb-6">สรุปผลคะแนนการเรียนรู้คำศัพท์ผลไม้ภาษาอังกฤษ</p>
+
+            <div class="bg-cream rounded-2xl p-4 border border-pink-light mb-6 flex justify-around items-center">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">คะแนนที่ได้</p>
+                    <p id="finalScore" class="text-3xl sm:text-4xl font-bold text-pink-dark font-english">0</p>
+                </div>
+                <div class="h-10 w-px bg-gray-200"></div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">ตอบถูกทั้งหมด</p>
+                    <p id="finalAccuracy" class="text-3xl sm:text-4xl font-bold text-green-dark font-english">0 / 15</p>
+                </div>
+            </div>
+
+            <!-- Encouragement Cheer Message -->
+            <div id="cheerMessage" class="text-base sm:text-lg font-semibold text-gray-700 mb-6 bg-green-light/40 p-3 rounded-xl">
+                🌟 สุดยอดเลยน้องๆ! มีความพยายามมากครับ!
+            </div>
+
+            <button onclick="resetGame()" class="btn-press bg-pink hover:bg-pink-dark text-white font-bold text-lg py-3 px-8 rounded-2xl shadow-md border-b-4 border-pink-dark transition-all">
+                <i class="fa-solid fa-rotate-right mr-2"></i> เล่นใหม่อีกครั้ง
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-4 text-center text-xs text-gray-400">
+        สื่อการเรียนรู้ภาษาอังกฤษสำหรับประถมศึกษาปีที่ 3 | พัฒนาโดย babiipannii
+    </footer>
+
+    <!-- Audio FX & Game Logic -->
+    <script>
+        // 15 Grade 3 Fruit Vocabulary with Thai Translation & Inline SVGs
+        const fruits = [
+            {
+                word: "APPLE",
+                thai: "แอปเปิ้ล",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="42" cy="55" r="28" fill="#FF5252"/><circle cx="58" cy="55" r="28" fill="#FF1744"/><path d="M50 30 Q55 20 62 22 Q58 32 50 35 Z" fill="#4CAF50"/><path d="M50 35 Q48 25 50 18" stroke="#795548" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="38" cy="45" r="4" fill="#FFF" opacity="0.4"/></svg>`
+            },
+            {
+                word: "BANANA",
+                thai: "กล้วย",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M20 30 C 40 90, 85 80, 85 45 C 85 45, 75 80, 25 35 Z" fill="#FFEB3B" stroke="#FBC02D" stroke-width="2"/><path d="M18 28 L 24 33" stroke="#795548" stroke-width="4" stroke-linecap="round"/><circle cx="45" cy="55" r="2" fill="#795548" opacity="0.3"/></svg>`
+            },
+            {
+                word: "ORANGE",
+                thai: "ส้ม",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="55" r="32" fill="#FF9800"/><path d="M50 25 Q58 15 65 20 Q60 30 50 30 Z" fill="#4CAF50"/><circle cx="40" cy="40" r="3" fill="#FFF" opacity="0.3"/><circle cx="62" cy="65" r="2" fill="#E65100" opacity="0.3"/><circle cx="38" cy="68" r="2" fill="#E65100" opacity="0.3"/></svg>`
+            },
+            {
+                word: "MANGO",
+                thai: "มะม่วง",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M35 25 C 75 15, 85 65, 55 85 C 30 100, 20 60, 35 25 Z" fill="#FFC107"/><path d="M40 22 C 38 15, 42 10, 42 10" stroke="#5D4037" stroke-width="3" fill="none"/><circle cx="45" cy="40" r="4" fill="#FFF" opacity="0.3"/></svg>`
+            },
+            {
+                word: "GRAPE",
+                thai: "องุ่น",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="40" r="12" fill="#9C27B0"/><circle cx="38" cy="48" r="12" fill="#8E24AA"/><circle cx="62" cy="48" r="12" fill="#8E24AA"/><circle cx="44" cy="62" r="12" fill="#7B1FA2"/><circle cx="56" cy="62" r="12" fill="#7B1FA2"/><circle cx="50" cy="74" r="10" fill="#6A1B9A"/><path d="M50 28 Q45 15 35 18" stroke="#388E3C" stroke-width="3" fill="none"/></svg>`
+            },
+            {
+                word: "WATERMELON",
+                thai: "แตงโม",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M15 45 A 35 35 0 0 0 85 45 Z" fill="#4CAF50"/><path d="M20 45 A 30 30 0 0 0 80 45 Z" fill="#FFF"/><path d="M24 45 A 26 26 0 0 0 76 45 Z" fill="#F44336"/><circle cx="40" cy="54" r="2" fill="#212121"/><circle cx="50" cy="58" r="2" fill="#212121"/><circle cx="60" cy="54" r="2" fill="#212121"/></svg>`
+            },
+            {
+                word: "STRAWBERRY",
+                thai: "สตรอว์เบอร์รี",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M25 35 C 25 20, 75 20, 75 35 C 75 65, 50 85, 50 85 C 50 85, 25 65, 25 35 Z" fill="#E91E63"/><path d="M35 25 Q50 32 65 25 Q50 20 35 25 Z" fill="#4CAF50"/><circle cx="40" cy="45" r="1.5" fill="#FFEB3B"/><circle cx="55" cy="42" r="1.5" fill="#FFEB3B"/><circle cx="48" cy="58" r="1.5" fill="#FFEB3B"/><circle cx="60" cy="58" r="1.5" fill="#FFEB3B"/><circle cx="40" cy="68" r="1.5" fill="#FFEB3B"/></svg>`
+            },
+            {
+                word: "PINEAPPLE",
+                thai: "สับปะรด",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="60" rx="22" ry="28" fill="#FFA000"/><path d="M50 35 L40 15 L50 22 L60 15 Z" fill="#388E3C"/><path d="M50 35 L32 20 L42 26 L48 33 Z" fill="#4CAF50"/><path d="M50 35 L68 20 L58 26 L52 33 Z" fill="#2E7D32"/><path d="M32 48 L68 72 M32 72 L68 48 M30 60 L70 60" stroke="#FF6F00" stroke-width="2"/></svg>`
+            },
+            {
+                word: "PAPAYA",
+                thai: "มะละกอ",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M40 25 C 65 20, 75 50, 65 75 C 55 90, 35 85, 30 70 C 22 50, 25 30, 40 25 Z" fill="#8BC34A"/><path d="M42 27 C 62 23, 70 50, 62 72 C 53 84, 37 80, 33 68 C 26 50, 29 32, 42 27 Z" fill="#FF9800"/><path d="M40 22 L 38 16" stroke="#5D4037" stroke-width="3"/></svg>`
+            },
+            {
+                word: "COCONUT",
+                thai: "มะพร้าว",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="52" r="30" fill="#6D4C41"/><circle cx="50" cy="52" r="24" fill="#D7CCC8"/><circle cx="50" cy="52" r="18" fill="#FFFFFF"/><circle cx="42" cy="42" r="3" fill="#5D4037"/><circle cx="55" cy="40" r="3" fill="#5D4037"/><circle cx="48" cy="50" r="3.5" fill="#5D4037"/></svg>`
+            },
+            {
+                word: "PEACH",
+                thai: "ลูกพีช",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M50 82 C 25 82, 20 50, 35 35 C 50 20, 50 30, 50 30 C 50 30, 50 20, 65 35 C 80 50, 75 82, 50 82 Z" fill="#FF8A80"/><path d="M50 30 C 50 50, 52 75, 50 82" stroke="#FF5252" stroke-width="2" fill="none"/><path d="M50 28 Q60 18 70 22 Q62 32 50 30 Z" fill="#66BB6A"/></svg>`
+            },
+            {
+                word: "CHERRY",
+                thai: "เชอร์รี่",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="35" cy="65" r="16" fill="#D50000"/><circle cx="68" cy="60" r="15" fill="#FF1744"/><path d="M35 50 Q 45 25 55 20" stroke="#558B2F" stroke-width="3" fill="none"/><path d="M68 45 Q 60 25 55 20" stroke="#558B2F" stroke-width="3" fill="none"/><path d="M55 20 Q 62 12 70 15 Z" fill="#7CB342"/><circle cx="30" cy="60" r="3" fill="#FFF" opacity="0.4"/><circle cx="63" cy="55" r="3" fill="#FFF" opacity="0.4"/></svg>`
+            },
+            {
+                word: "LEMON",
+                thai: "มะนาวเหลือง",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M22 50 Q 20 30 50 25 Q 80 20 78 50 Q 80 80 50 75 Q 20 70 22 50 Z" fill="#FFEE58"/><path d="M18 50 C 15 45, 15 55, 18 50 Z" fill="#FDD835"/><path d="M82 50 C 85 45, 85 55, 82 50 Z" fill="#FDD835"/><circle cx="40" cy="40" r="3" fill="#FFF" opacity="0.5"/></svg>`
+            },
+            {
+                word: "KIWI",
+                thai: "กีวี่",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><ellipse cx="50" cy="52" rx="32" ry="26" fill="#8D6E63"/><ellipse cx="50" cy="52" rx="27" ry="21" fill="#C0CA33"/><ellipse cx="50" cy="52" rx="12" ry="9" fill="#F0F4C3"/><circle cx="42" cy="48" r="1.5" fill="#212121"/><circle cx="58" cy="48" r="1.5" fill="#212121"/><circle cx="50" cy="43" r="1.5" fill="#212121"/><circle cx="50" cy="61" r="1.5" fill="#212121"/></svg>`
+            },
+            {
+                word: "AVOCADO",
+                thai: "อะโวคาโด",
+                svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M50 20 C 65 20, 75 45, 75 65 C 75 80, 65 85, 50 85 C 35 85, 25 80, 25 65 C 25 45, 35 20, 50 20 Z" fill="#33691E"/><path d="M50 25 C 62 25, 70 47, 70 64 C 70 77, 61 80, 50 80 C 39 80, 30 77, 30 64 C 30 47, 38 25, 50 25 Z" fill="#DCEDC8"/><circle cx="50" cy="62" r="14" fill="#6D4C41"/><circle cx="46" cy="58" r="3" fill="#FFF" opacity="0.3"/></svg>`
+            }
+        ];
+
+        // Game State Variables
+        let currentIndex = 0;
+        let score = 0;
+        let timerSeconds = 20 * 60; // 20 minutes countdown
+        let timerInterval = null;
+        let currentWordObj = null;
+        let userAnswers = []; // Holds user guessed letters for blanks
+        let missingIndices = []; // Indices of letters replaced by blanks
+
+        // Sound Effects using Web Audio API (No external assets needed)
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playCorrect() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15); // E5
+                osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.3); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            },
+            playWrong() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(220, now); // A3
+                osc.frequency.setValueAtTime(180, now + 0.15); // Low note
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        };
+
+        // Start Game
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('flex');
+            
+            score = 0;
+            currentIndex = 0;
+            timerSeconds = 20 * 60;
+            updateScoreDisplay();
+            startTimer();
+            loadQuestion();
+        }
+
+        // Timer Countdown
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                const mins = Math.floor(timerSeconds / 60);
+                const secs = timerSeconds % 60;
+                document.getElementById('timerDisplay').innerText = 
+                    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Load Single Question
+        function loadQuestion() {
+            currentWordObj = fruits[currentIndex];
+            const word = currentWordObj.word;
+            
+            // Determine how many letters to hide based on word length
+            // 1-2 blanks depending on length to suit P.3 difficulty
+            missingIndices = [];
+            let numBlanks = word.length > 6 ? 2 : 1;
+            
+            // Randomly select indices for missing letters
+            while (missingIndices.length < numBlanks) {
+                let randIdx = Math.floor(Math.random() * word.length);
+                if (!missingIndices.includes(randIdx)) {
+                    missingIndices.push(randIdx);
+                }
+            }
+
+            // Initialize user answers array
+            userAnswers = word.split('').map((char, idx) => {
+                return missingIndices.includes(idx) ? '_' : char;
+            });
+
+            // UI Reset
+            document.getElementById('questionProgress').innerText = `Word ${currentIndex + 1} / ${fruits.length}`;
+            document.getElementById('thaiHint').innerText = `คำแปล: ${currentWordObj.thai}`;
+            document.getElementById('fruitImage').innerHTML = currentWordObj.svg;
+            
+            // Blur image initially
+            const fruitImgEl = document.getElementById('fruitImage');
+            fruitImgEl.className = "w-full h-full transition-all duration-500 transform scale-90 filter blur-md opacity-30";
+            document.getElementById('imageOverlay').classList.remove('hidden');
+            document.getElementById('speakBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+
+            renderWordSlots();
+            renderKeyboard();
+        }
+
+        // Render Word Slots (Letters and Inputs)
+        function renderWordSlots() {
+            const container = document.getElementById('wordContainer');
+            container.innerHTML = '';
+
+            userAnswers.forEach((char, idx) => {
+                const isBlank = missingIndices.includes(idx);
+                const slot = document.createElement('div');
+                
+                slot.className = `w-10 h-12 sm:w-12 sm:h-14 flex items-center justify-center font-bold text-xl sm:text-2xl rounded-2xl border-2 transition-all duration-300 ${
+                    isBlank 
+                        ? (char === '_' ? 'border-pink-dark bg-pink-light/30 text-pink-dark animate-pulse' : 'border-green-medium bg-green-light text-green-dark') 
+                        : 'border-gray-200 bg-gray-50 text-gray-700'
+                }`;
+                slot.innerText = char === '_' ? '?' : char;
+                container.appendChild(slot);
+            });
+        }
+
+        // Render Keyboard Buttons
+        function renderKeyboard() {
+            const kbContainer = document.getElementById('keyboard');
+            kbContainer.innerHTML = '';
+            
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+            
+            letters.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = "btn-press bg-cream hover:bg-pink-light text-gray-700 font-bold py-2 rounded-xl border border-pink/40 shadow-sm text-base sm:text-lg hover:border-pink text-center";
+                btn.innerText = letter;
+                btn.onclick = () => handleInputLetter(letter, btn);
+                kbContainer.appendChild(btn);
+            });
+        }
+
+        // Handle Keyboard Selection
+        function handleInputLetter(letter, buttonEl) {
+            // Find first empty blank slot
+            const emptyBlankIdx = missingIndices.find(idx => userAnswers[idx] === '_');
+
+            if (emptyBlankIdx === undefined) return; // All filled already
+
+            // Check if selected letter matches required letter for this blank or any blank
+            const correctLetterAtIdx = currentWordObj.word[emptyBlankIdx];
+
+            if (letter === correctLetterAtIdx) {
+                // Correct placement
+                userAnswers[emptyBlankIdx] = letter;
+                AudioFX.playCorrect();
+                renderWordSlots();
+
+                // Check if whole word is solved
+                if (!userAnswers.includes('_')) {
+                    onWordSolved();
+                }
+            } else {
+                // Wrong guess visual feedback
+                AudioFX.playWrong();
+                buttonEl.classList.add('bg-red-100', 'text-red-500', 'border-red-300');
+                setTimeout(() => {
+                    buttonEl.classList.remove('bg-red-100', 'text-red-500', 'border-red-300');
+                }, 400);
+            }
+        }
+
+        // Word Solved Successfully
+        function onWordSolved() {
+            // Add Score
+            score += 1;
+            updateScoreDisplay();
+
+            // Reveal Image
+            const fruitImgEl = document.getElementById('fruitImage');
+            fruitImgEl.className = "w-full h-full transition-all duration-500 transform scale-100 filter blur-none opacity-100";
+            document.getElementById('imageOverlay').classList.add('hidden');
+
+            // Trigger Confetti Celebration
+            confetti({
+                particleCount: 40,
+                spread: 60,
+                origin: { y: 0.7 },
+                colors: ['#FFC2D1', '#B7E4C7', '#FFEB3B']
+            });
+
+            // Show Sound & Next Button
+            document.getElementById('speakBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+
+            // Auto Speak Pronunciation
+            speakCurrentWord();
+        }
+
+        // Speak Word using Web Speech API
+        function speakCurrentWord() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(currentWordObj.word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85; // Slightly slower for primary kids
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Hint Button
+        function getHint() {
+            const emptyBlankIdx = missingIndices.find(idx => userAnswers[idx] === '_');
+            if (emptyBlankIdx !== undefined) {
+                const correctLetter = currentWordObj.word[emptyBlankIdx];
+                userAnswers[emptyBlankIdx] = correctLetter;
+                AudioFX.playCorrect();
+                renderWordSlots();
+
+                if (!userAnswers.includes('_')) {
+                    onWordSolved();
+                }
+            }
+        }
+
+        // Next Question
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < fruits.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        // Update Score Display
+        function updateScoreDisplay() {
+            document.getElementById('scoreDisplay').innerText = score;
+        }
+
+        // End Game & Show Summary
+        function endGame() {
+            clearInterval(timerInterval);
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('summaryModal').classList.remove('hidden');
+
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalAccuracy').innerText = `${score} / ${fruits.length}`;
+
+            // Cheer Message based on performance
+            const cheerEl = document.getElementById('cheerMessage');
+            if (score >= 12) {
+                cheerEl.innerText = "🌟 สุดยอดความรอบรู้! น้องเก่งภาษาอังกฤษระดับเทพเลย!";
+            } else if (score >= 8) {
+                cheerEl.innerText = "👏 เก่งมากเลยครับ! ฝึกฝนอีกนิดจะตอบถูกครบแน่นอน!";
+            } else {
+                cheerEl.innerText = "✌️ พยายามได้ดีมากครับ! ลองเล่นใหม่อีกครั้งเพื่อฝึกทบทวนนะคะ";
+            }
+
+            // Celebration Confetti
+            confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { y: 0.5 }
+            });
+        }
+
+        // Reset Game
+        function resetGame() {
+            document.getElementById('summaryModal').classList.add('hidden');
+            startGame();
+        }
+    </script>
+</body>
+</html>
